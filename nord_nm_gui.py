@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # NordVPN-NetworkManager-GUI a graphical frontend for both NordVPN and the Network Manager
 # Copyright (C) 2018 Vincent Foster-Mueller
+# Fork Verson 2019 Sawa
 import sys
 import os
 import requests
@@ -12,6 +13,8 @@ import subprocess
 import configparser
 from collections import namedtuple
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QSystemTrayIcon, QStyle, QAction, qApp,  QMenu
+from PyQt5.QtGui import QIcon
 
 connection_type_options = ['UDP', 'TCP']
 server_type_options = ['P2P', 'Standard', 'Double VPN', 'TOR over VPN', 'Dedicated IP'] # , 'Anti-DDoS', 'Obfuscated Server']
@@ -43,7 +46,44 @@ class MainWindow(QtWidgets.QMainWindow):
         self.domain_list = []
         self.server_info_list = []
         self.login_ui()
+
+        """
+        Initialize System Tray Icon
+        """
+        self.trayIcon = QIcon("nordvpnicon.png")
+        self.tray_icon = QSystemTrayIcon(self)
+        self.tray_icon.setIcon(self.trayIcon)
+        show_action = QAction("Show NordVPN Network Manager", self)
+        quit_action = QAction("Exit", self)
+        hide_action = QAction("Minimized", self)
+        show_action.triggered.connect(self.show)
+        hide_action.triggered.connect(self.hide)
+        quit_action.triggered.connect(qApp.quit)
+        tray_menu = QMenu()
+        tray_menu.addAction(show_action)
+        tray_menu.addAction(hide_action)
+        tray_menu.addAction(quit_action)
+        self.tray_icon.setContextMenu(tray_menu)
+        self.tray_icon.show()
+
+        """
+        Initialize GUI
+        """
         self.show()
+
+
+    """
+    Override default close event
+    """
+    def closeEvent(self, event):
+        event.ignore()
+        self.hide()
+        self.tray_icon.showMessage(
+            "NordVPN Network Manager",
+            "NordVPN Network Manager was minimized to System Tray",
+            QSystemTrayIcon.Information,
+            2500
+        )
 
     def main_ui(self):
         """
@@ -1182,5 +1222,5 @@ class MainWindow(QtWidgets.QMainWindow):
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    ui = MainWindow()
+    ui = MainWindow()    
     sys.exit(app.exec_())
