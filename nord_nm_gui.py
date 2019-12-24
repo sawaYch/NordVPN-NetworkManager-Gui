@@ -381,6 +381,7 @@ class MainWindow(QtWidgets.QMainWindow):
                self.user_input.setText(user_account)
                self.password_input.setText(keyring.get_password("nordvpn-nm",user_account))
                self.check_box.setChecked(True)
+           f.close()
 
     def write_conf(self):
         """
