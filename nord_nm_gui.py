@@ -11,16 +11,17 @@ import hashlib
 import time
 import subprocess
 import configparser
+import keyring
 from collections import namedtuple
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QSystemTrayIcon, QStyle, QAction, qApp,  QMenu
+from PyQt5.QtWidgets import QSystemTrayIcon, QStyle, QAction, qApp,  QMenu, QCheckBox
 from PyQt5.QtGui import QIcon
 
 connection_type_options = ['UDP', 'TCP']
 server_type_options = ['P2P', 'Standard', 'Double VPN', 'TOR over VPN', 'Dedicated IP'] # , 'Anti-DDoS', 'Obfuscated Server']
 api = "https://api.nordvpn.com/server"
 ServerInfo = namedtuple('ServerInfo', 'name, country, domain, type, load, categories')
-
+keyring.get_keyring()
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -319,6 +320,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.password_input.setObjectName("password_input")
         self.horizontalLayout_2.addWidget(self.password_input)
         self.verticalLayout.addLayout(self.horizontalLayout_2)
+        self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_4.setObjectName("horizontalLayout_4")
+        self.check_box = QCheckBox('Remember Me')
+        spacerItem2 = QtWidgets.QSpacerItem(175, 20, QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_4.addItem(spacerItem2)
+        self.horizontalLayout_4.addWidget(self.check_box)
+        self.verticalLayout.addLayout(self.horizontalLayout_4)
         self.horizontalLayout_3.addLayout(self.verticalLayout)
         spacerItem = QtWidgets.QSpacerItem(80, 20, QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_3.addItem(spacerItem)
@@ -349,6 +357,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def check_configs(self):
         """
         Checks if config directories and files exist and creates them if they do not
+        Check remember me accound exist
         """
         try:
             if not os.path.isdir(self.base_dir):
@@ -363,7 +372,15 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.write_conf()
 
         except PermissionError:
-            self.statusbar.showMessage("Insufficient Permissions to create config folder", 2000)
+            self.statusbar.showMessage("Insufficient Permissions to create config folder", 2000)    
+        if os.path.isfile('remember_me'):
+           f = open("remember_me","r")
+           user_account = ""
+           if f.mode == 'r':
+               user_account = f.read()
+               self.user_input.setText(user_account)
+               self.password_input.setText(keyring.get_password("nordvpn-nm",user_account))
+               self.check_box.setChecked(True)
 
     def write_conf(self):
         """
@@ -393,9 +410,17 @@ class MainWindow(QtWidgets.QMainWindow):
         Verifies responses and updates GUI
         """
         if self.user_input.text() and self.password_input.text():
+            """
+            Remember username and password
+            """
+            if self.check_box.isChecked():
+                f = open("remember_me","w+")
+                f.write(self.user_input.text())
+                f.close()
             self.statusbar.showMessage('Login Success', 2000)
             self.username = self.user_input.text()
             self.password = self.password_input.text()
+            keyring.set_password("nordvpn-nm", self.username, self.password)
             self.repaint()
             time.sleep(0.5)
             self.hide()
