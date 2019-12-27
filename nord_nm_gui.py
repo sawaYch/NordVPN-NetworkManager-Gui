@@ -26,9 +26,10 @@ ServerInfo = namedtuple('ServerInfo', 'name, country, domain, type, load, catego
 """
 Fork
 Keyring for 'remember me' features
-
+Login success flag
 """
 keyring.get_keyring()
+login_success = False
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -68,6 +69,7 @@ class MainWindow(QtWidgets.QMainWindow):
         show_action.triggered.connect(self.show)
         hide_action.triggered.connect(self.hide)
         quit_action.triggered.connect(self.quitAppEvent)
+        self.tray_icon.activated.connect(self.resume)
         tray_menu = QMenu()
         tray_menu.addAction(show_action)
         tray_menu.addAction(hide_action)
@@ -90,7 +92,7 @@ class MainWindow(QtWidgets.QMainWindow):
         raw_output = process.readAll()
         response = str(raw_output, encoding='u8')
         exit_code = process.exitCode()
-        if exit_code:
+        if exit_code and login_success is True:
             print("Error in Nordvpn logout problem:")
             print(response)
         qApp.quit()
@@ -108,6 +110,15 @@ class MainWindow(QtWidgets.QMainWindow):
             QSystemTrayIcon.Information,
             2500
         )
+
+    """
+    Resume from SystemTray
+    """
+    def resume(self, activation_reason):
+        if activation_reason == 3:
+            self.show()
+
+
 
     def main_ui(self):
         """
@@ -428,12 +439,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.auto_connect_box.setChecked(True)
 
     def verify_credentials(self):
-        """
-        Login success flag
-        """
-        login_success = False
-
-
         """
         Requests a token, salt and key from Nord api
         Sends a final hash of (salt+password)+key and token to Nord api
