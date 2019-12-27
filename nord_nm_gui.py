@@ -16,12 +16,20 @@ from collections import namedtuple
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QSystemTrayIcon, QStyle, QAction, qApp,  QMenu, QCheckBox
 from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import QProcess
 
 connection_type_options = ['UDP', 'TCP']
 server_type_options = ['P2P', 'Standard', 'Double VPN', 'TOR over VPN', 'Dedicated IP'] # , 'Anti-DDoS', 'Obfuscated Server']
 api = "https://api.nordvpn.com/server"
 ServerInfo = namedtuple('ServerInfo', 'name, country, domain, type, load, categories')
+
+"""
+Fork
+Keyring for 'remember me' features
+
+"""
 keyring.get_keyring()
+
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -59,7 +67,7 @@ class MainWindow(QtWidgets.QMainWindow):
         hide_action = QAction("Minimized", self)
         show_action.triggered.connect(self.show)
         hide_action.triggered.connect(self.hide)
-        quit_action.triggered.connect(qApp.quit)
+        quit_action.triggered.connect(self.quitAppEvent)
         tray_menu = QMenu()
         tray_menu.addAction(show_action)
         tray_menu.addAction(hide_action)
@@ -71,6 +79,21 @@ class MainWindow(QtWidgets.QMainWindow):
         Initialize GUI
         """
         self.show()
+
+    """
+    Logout nordvpn before quit
+    """
+    def quitAppEvent(self):
+        process = QProcess()
+        process.start("nordvpn", ["logout"])
+        process.waitForFinished(3000)
+        raw_output = process.readAll()
+        response = str(raw_output, encoding='u8')
+        exit_code = process.exitCode()
+        if exit_code:
+            print("Error in Nordvpn logout problem:")
+            print(response)
+        qApp.quit()
 
 
     """
@@ -406,26 +429,73 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def verify_credentials(self):
         """
+        Login success flag
+        """
+        login_success = False
+
+
+        """
         Requests a token, salt and key from Nord api
         Sends a final hash of (salt+password)+key and token to Nord api
         Verifies responses and updates GUI
         """
         if self.user_input.text() and self.password_input.text():
             """
-            Remember username and password
+
+            Verify Credentials if username & password pair not empty
+            use official program nordvpn (2019) to implement
+
             """
-            if self.check_box.isChecked():
-                f = open("remember_me","w+")
-                f.write(self.user_input.text())
-                f.close()
-            self.statusbar.showMessage('Login Success', 2000)
-            self.username = self.user_input.text()
-            self.password = self.password_input.text()
-            keyring.set_password("nordvpn-nm", self.username, self.password)
-            self.repaint()
-            time.sleep(0.5)
-            self.hide()
-            self.main_ui()
+            process = QProcess()
+            process.start("nordvpn", ["login", "-u", self.user_input.text(),"-p", self.password_input.text()])
+            process.waitForFinished(3000)
+            raw_output = process.readAll()
+
+
+            """
+            Exit code
+            0 means login successfully,
+            1 means already login or incorrect username/password
+
+            Response
+            login fail:
+            1. You are already logged in.
+            2. Username or password is not correct. Please try again.
+            login success:
+            3. Welcome to NordVPN! You can now connect to VPN by using '/usr/bin/nordvpn connect'.
+            """
+            response = str(raw_output, encoding='u8')
+            exit_code = process.exitCode()
+            print(response)
+            print(exit_code)
+            if not exit_code:
+                login_success = True
+            else:
+                if "Username or password is not correct. Please try again." in response:
+                    self.statusbar.showMessage("Username or password is not correct. Please try again.", 3000) # Here typo fixed
+                elif "You are already logged in." in response:
+                    self.statusbar.showMessage("You are already logged in.", 2000) # Here typo fixed
+                    login_success = True
+                    self.repaint()
+                    time.sleep(1.5)
+
+            """
+            Login Suucess
+            """
+            if (login_success):
+                # Remember username and password
+                if self.check_box.isChecked():
+                    f = open("remember_me","w+")
+                    f.write(self.user_input.text())
+                    f.close()
+                self.statusbar.showMessage('Login Success', 2000)
+                self.username = self.user_input.text()
+                self.password = self.password_input.text()
+                keyring.set_password("nordvpn-nm", self.username, self.password)
+                self.repaint()
+                time.sleep(0.5)
+                self.hide()
+                self.main_ui()
         else:
             self.statusbar.showMessage('Username or password field cannot be empty', 2000) # Here typo fixed
         # try:
@@ -471,6 +541,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # except Exception as ex:
         #     self.statusbar.showMessage("API Error: could not fetch token", 2000)
         #     self.get_api_data()
+
 
     def get_api_data(self):
         """
