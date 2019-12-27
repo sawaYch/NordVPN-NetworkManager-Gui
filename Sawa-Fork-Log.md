@@ -5,9 +5,8 @@ This is the update log of [sawa/NordVPN-NetworkManager-Gui](https://github.com/s
 Now I have done the followings:
 
 - [x] Hide NordVPN NM GUI in System Tray
-
 - [x] Remember  Me
-
+- [x] Verify Credentials (user login)
 
 
 ## System Tray
