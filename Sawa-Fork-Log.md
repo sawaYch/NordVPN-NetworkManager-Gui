@@ -14,7 +14,8 @@ Now I have done the followings:
 
 ![](./screenshots/system_tray.png)
 
-Right click to open a menu, to select hide or show;
+Right click to open a menu to exit the program; Click on the icon to resume the GUI.
+
 Close button of the application no long exit the program, but hiding the application window to system tray.
 
 
@@ -32,3 +33,18 @@ Use a file to store the user account, and each time check if the file exist, use
 It means users are required to install python3-keyring first.
 
 for Ubuntu 18.04, you can see my [gists notes]( https://gist.github.com/sawaYch/dbc64c93e7d1b10e1da5f1c5d3c6e505#file-python3-keyring-md).
+
+
+
+##  Credentials Verification
+
+![verify](./screenshots/verify.png)
+
+#### Implementation
+
+Verify user account password work now. 
+
+I'm not using any unofficial API (from reversing engineering), but the official NordVPN program which supported credentials check, so users now are required to install the official program first to use this program. 
+
+Don't worry, it is easy to do it. For .deb and .rpm package platform, just visit [Official Website]( https://nordvpn.com/download/linux?_ga=2.229864092.1233432247.1577451763-1880674534.1576582712); or Arch Linux User can go [AUR](https://aur.archlinux.org/packages/nordvpn-bin/)
+
