@@ -427,7 +427,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.hide()
             self.main_ui()
         else:
-            self.statusbar.showMessage('Username or password field cannot be empty, 2000')
+            self.statusbar.showMessage('Username or password field cannot be empty', 2000) # Here typo fixed
         # try:
         #     resp = requests.get('https://apself.statusbar.showMessage('Login Success', 2000)
     #                         self.username = self.user_input.text()
