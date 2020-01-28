@@ -12,6 +12,7 @@ import time
 import subprocess
 import configparser
 import keyring
+import prctl
 from collections import namedtuple
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QSystemTrayIcon, QStyle, QAction, qApp,  QMenu, QCheckBox
@@ -74,6 +75,7 @@ class MainWindow(QtWidgets.QMainWindow):
         tray_menu.addAction(show_action)
         tray_menu.addAction(hide_action)
         tray_menu.addAction(quit_action)
+        self.tray_icon.setToolTip("NordVPN NM")
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
 
@@ -1323,6 +1325,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 if __name__ == '__main__':
+    appname = "NordVPN-nm"
+    prctl.set_name(appname)
+    prctl.set_proctitle(appname)
     app = QtWidgets.QApplication(sys.argv)
     ui = MainWindow()    
     sys.exit(app.exec_())

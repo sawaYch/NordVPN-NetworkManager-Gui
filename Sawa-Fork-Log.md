@@ -9,6 +9,17 @@ Now I have done the followings:
 - [x] Verify Credentials (user login)
 
 
+
+# Require Packages
+
+```shell
+# python-prctl
+pip3 install python-prctl
+```
+
+
+
+
 ## System Tray
 
 ![](./screenshots/system_tray.png)
